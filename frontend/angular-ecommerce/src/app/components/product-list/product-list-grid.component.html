@@ -6,14 +6,23 @@
 
         <div *ngFor ="let item of products" class="col-md-3">
           <div class="product-box">
-            <img src="{{item.imageUrl}}" class="img-responsive">
-            <p>{{item.name}}</p>
+            <a routerLink="/products/{{item.id}}">
+              <img src="{{item.imageUrl}}" class="img-responsive">
+            </a>
+
+            <a routerLink="/products/{{item.id}}">
+              <p>{{item.name}}</p>
+            </a>
+
             <div class="price">{{item.unitPrice}}</div>
             <a href="#" class="primary-btn">Add to cart</a>
           </div>
         </div>
 
-
+      <!--<div *ngIf="products?.length == 0 " class="aler alert-warning col-md-12" role="alert">
+          No Products Found..
+        </div>
+-->
       </div>
 
     </div>
