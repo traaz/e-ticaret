@@ -63,7 +63,7 @@ export class CartService {
     //ilgili itemin indexi bul arrayde
     const itemIndex = this.carItems.findIndex(item => item.id == theCartItem.id);
     if(itemIndex > -1){
-      this.carItems.splice(itemIndex,1);
+      this.carItems.splice(itemIndex, 1);
       this.computeCartTotals();
     }
 

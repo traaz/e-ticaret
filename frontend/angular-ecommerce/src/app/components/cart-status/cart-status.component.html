@@ -1,6 +1,20 @@
 <div class="cart-area d-n">
   <a routerLink="/cart-details">
-    <div class="total">{{totalPrice}} <span> {{totalQuantity}}</span> </div> <i class="fa fa-shopping-cart"
-      aria-hidden="true"></i>
+    <div *ngIf="cartItems.length > 0">
+
+    <div class="total">{{totalPrice}}
+      <span> {{totalQuantity}}</span>
+    </div>
+    <i class="fa fa-shopping-cart" aria-hidden="true"></i>
+
+  </div>
+
+  <div *ngIf="cartItems.length == 0 ">
+    <div class="total">0
+      <span>0</span>
+    </div>
+    <i class="fa fa-shopping-cart" aria-hidden="true"></i>
+  </div>
+
   </a>
 </div>

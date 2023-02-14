@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { CartItem } from 'src/app/common/cart-item';
 import { CartService } from 'src/app/services/cart.service';
 
 @Component({
@@ -7,6 +8,8 @@ import { CartService } from 'src/app/services/cart.service';
   styleUrls: ['./cart-status.component.css']
 })
 export class CartStatusComponent implements OnInit {
+  cartItems: CartItem[] = [];
+
   totalPrice:number = 0.00;
   totalQuantity:number = 0;
 
@@ -16,6 +19,8 @@ export class CartStatusComponent implements OnInit {
     this.updateCartStatus();
   }
   updateCartStatus() {
+    this.cartItems=this.cartService.carItems;
+
     //subscribe to the car total price
     this.cartService.totalPrice.subscribe(
       data => this.totalPrice = data
