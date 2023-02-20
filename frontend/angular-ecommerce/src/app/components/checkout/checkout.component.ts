@@ -1,7 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Country } from 'src/app/common/country';
+import { Order } from 'src/app/common/order';
+import { OrderItem } from 'src/app/common/order-item';
+import { Purchase } from 'src/app/common/purchase';
 import { State } from 'src/app/common/state';
+import { CartService } from 'src/app/services/cart.service';
+import { CheckoutService } from 'src/app/services/checkout.service';
 import { FormServiceService } from 'src/app/services/form-service.service';
 
 @Component({
@@ -12,7 +18,7 @@ import { FormServiceService } from 'src/app/services/form-service.service';
 export class CheckoutComponent implements OnInit {
 
   checkoutFormGroup!: FormGroup;
-  totalPrice: number = 0;
+  totalPrice: number = 0.0;
   totalQuantity: number = 0;
   creditCardYears : number [] = [];
   creditCardMonths : number [] = [];
@@ -21,7 +27,10 @@ export class CheckoutComponent implements OnInit {
   billingAddressStates : State[] = [];
 
   constructor(private formBuilder: FormBuilder,
-    private formService : FormServiceService) { }
+    private formService : FormServiceService,
+    private cartService: CartService,
+    private checkoutService: CheckoutService,
+    private router:Router) { }
 
   ngOnInit(): void {
     this.checkoutFormGroup = this.formBuilder.group({
@@ -73,6 +82,12 @@ export class CheckoutComponent implements OnInit {
         this.countries = data;
       }
     )
+    this.cartService.totalPrice.subscribe(
+      data => this.totalPrice = data
+    );
+    this.cartService.totalQuantity.subscribe(
+      data => this.totalQuantity = data
+    );
 
   }
   get firstName(){ return this.checkoutFormGroup.get('customer.firstName'); }
@@ -101,8 +116,74 @@ export class CheckoutComponent implements OnInit {
     console.log("Handling submit data")
     if(this.checkoutFormGroup.invalid){
       this.checkoutFormGroup.markAllAsTouched(); //eger istenilen validation olmazsa ve submit edilirse input altında hata mesaji gösterilcek
+      return;
     }
+     //order
+    let order = new Order();
+    order.totalPrice= this.totalPrice;
+    order.totalQuantity = this.totalQuantity;
+    //cart item
+    const cartItems = this.cartService.carItems;
+     //orderItems from carItems
+     let orderItems: OrderItem[] = [];
+     for(let i =0 ; i<cartItems.length; i++){
+      orderItems[i] = new OrderItem(cartItems[i]);
+     }
+     //purchase customer
+     let purchase = new Purchase();
+     purchase.customer = this.checkoutFormGroup.controls['customer'].value;
+
+     //purchase shipping
+
+     purchase.shippingAddress = this.checkoutFormGroup.controls['shippingAddress'].value;
+     //Get the state object
+     const shippingState : State = JSON.parse(JSON.stringify(purchase.shippingAddress.state));
+     //Get the country object
+     const shippingCountry : Country = JSON.parse(JSON.stringify(purchase.shippingAddress.country));
+     //Get the name of state from State object
+     purchase.shippingAddress.state = shippingState.name;
+     purchase.shippingAddress.country = shippingCountry.name;
+
+     //purchase billing
+     purchase.billingAddress = this.checkoutFormGroup.controls['billingAddress'].value;
+     const billingState : State = JSON.parse(JSON.stringify(purchase.billingAddress.state));
+     const billingCountry : Country = JSON.parse(JSON.stringify(purchase.billingAddress.country));
+     purchase.billingAddress.state = billingState.name;
+     purchase.billingAddress.country = billingState.name;
+
+    //order order items
+
+
+    purchase.order = order;
+     purchase.orderItems = orderItems;
+
+     //call rest api via the checkoutservice
+     this.checkoutService.placeOrder(purchase).subscribe(
+      {
+        next: response =>{
+          alert(`Your order hass been received.\nOrder tracking number: ${response.orderTrackingNumber}`)
+          this.resetCart();
+        },
+        error: err=> {
+          alert(`There was an error: ${err.message}`)
+        }
+      }
+     );
+
+
+
     console.log(this.checkoutFormGroup.get('customer')?.value);
+  }
+  resetCart() {
+    //reset cart data
+    this.cartService.carItems = [];
+    this.cartService.totalPrice.next(0); //tum abonelere sifir gonder
+    this.cartService.totalQuantity.next(0);
+    //reset the form
+    this.checkoutFormGroup.reset();
+    //router
+    this.router.navigateByUrl("/products");
+
   }
 
   copyShippingAddressToBillingAddress(event:any) {
